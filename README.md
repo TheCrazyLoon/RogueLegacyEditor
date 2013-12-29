@@ -1,7 +1,7 @@
 Rogue Legacy Profile Editor
 =================
 
-**[Try the editor now](jakeh.github.io/RogueLegacyEditor)**
+**[Try the editor now](http://jakeh.github.io/RogueLegacyEditor)**
 
 A web-based editor for the Player Profile save file for the game Rogue Legacy.
 
