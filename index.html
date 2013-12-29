@@ -1,0 +1,361 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Rogue Legacy Save Editor</title>
+
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <link href="./css/rogue.css" rel="stylesheet">
+    <link href="./css/bootstrap-switch.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h3 class="text-muted">Rogue Legacy Save Editor</h3>
+        </div>
+
+
+
+        <div id="uploadContainer" class="well">
+            <p class="lead">To get started, drag and drop the RogueLegacyPlayer.rcdat file here. <small><a href="http://pcgamingwiki.com/wiki/Rogue_Legacy#Save_game_data_location" target="_blank">Save game location can be found here.</a> </small></p>
+
+            <div id="dropzone" class="alert alert-info">Drop save file here</div>
+            <p class="alert alert-danger">
+                Make sure you have a backup of your data before you use this tool. This tool may be inaccurate if the game has been updated. Known to work with the Windows version 1.2.0b of Rogue Legacy.
+            </p>
+
+        </div>
+
+        <div id="editor" class="well" style="display: none;">
+            <form class="form-horizontal" role="form" id="saveEditorForm">
+            </form>
+            <hr />
+            <div class="row">
+                <div class="col-xs-6 col-xs-push-3">
+                    <button type="button" id="downloadButton" class="btn btn-primary btn-lg">Download Profile</button>
+                </div>
+                <div class="col-xs-4 col-xs-push-1">
+                    <button type="button" id="resetButton" class="btn btn-warning btn-lg">Reset</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <script src="./js/jquery-1.10.2.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/bootstrap-switch.min.js"></script>
+    <script src="./js/FileSaver.js"></script>
+    <script src="./js/jdataview.js"></script>
+    <script src="./js/rogue.js"></script>
+
+    <script type="text/template" id="templateInt">
+
+        <div class="form-group">
+            <label for="input{prop}" class="col-sm-4 control-label">{title}</label>
+
+            <div class="col-sm-5">
+                <input id="input{prop}" class="form-control" type="number" name="{prop}" min="{min}" max="{max}" step="{step}" value="{value}" data-number-type="{numberType}" />
+
+                <span class="help-block">Min: <strong>{min}</strong> | Max: <strong>{max}</strong>&nbsp; <span class="text-info">{help}</span></span>
+            </div>
+            <div class="col-sm-3">
+                <button type="button" class="btn btn-default" onclick="javascript:setValue('{prop}',{max})" title="Set to maximum value">Max</button>
+                <button type="button" class="btn btn-default" onclick="javascript:setValue('{prop}',{min})" title="Set to minimum value">Min</button>
+            </div>
+        </div>
+
+
+    </script>
+
+    <script type="text/template" id="templateBool">
+
+        <div class="form-group">
+
+            <label for="input{prop}" class="col-sm-4 control-label">{title}</label>
+
+            <div class="col-sm-5">
+                <input id="input{prop}" {checked} type="checkbox" name="{prop}" class="switch-large" data-on-label="{onLabel}" data-off-label="{offLabel}" data-on="{onClass}" data-off="{offClass}" />
+
+                <span class="help-block"><span class="text-info">{help}</span></span>
+            </div>
+        </div>
+
+
+    </script>
+
+    <script type="text/template" id="templateString">
+
+        <div class="form-group">
+
+            <label for="input{prop}" class="col-sm-4 control-label">{title}</label>
+
+            <div class="col-sm-5">
+                <input id="input{prop}" {readonly} type="text" name="{prop}" class="form-control" value="{value}" />
+
+            </div>
+        </div>
+
+
+    </script>
+
+
+    <script type="text/template" id="templateSelect">
+
+        <div class="form-group">
+
+            <label for="input{prop}" class="col-sm-4 control-label">{title}</label>
+
+            <div class="col-sm-5">
+                <select class="form-control" name="{prop}" id="input{prop}">
+                    {options}
+                </select>
+
+            </div>
+        </div>
+
+
+    </script>
+
+    <script>
+
+        /// <reference path="./js/rogue.js" />
+
+        String.prototype.format = function (data) {
+            return this.replace(/{(\w+)}/g, function (match) {
+                if (match.length <= 2) return match;
+                var p = match.replace(/^{/, '').replace(/}$/, '')
+                return typeof data[p] != 'undefined' ? data[p] : match;
+            });
+        };
+
+        var MAX_INT32 = 2147483647;
+        var MAX_BYTE = 255;
+        var MAX_FLOAT = 3.40282347E+38;
+
+        function setValue(name, value) {
+            $('#saveEditorForm input[name=' + name + ']').val(parseFloat(value));
+        }
+
+        function addSection(title) {
+            $('#saveEditorForm').append($('<h3>' + title + '</h3><br />'));
+        }
+
+        function addTemplatedItem(data) {
+
+            data.value = Rogue.character[data.prop];
+
+            if (typeof (data.value) === 'boolean') {
+                data.checked = data.value ? 'checked' : '';
+            }
+
+            if (data.template == 'Select') {
+
+                var opts = '';
+                for (var i in data.options) {
+                    opts += '<option value="' + i + '"' + (data.value == i ? 'selected' : '') + '>' + data.options[i] + '</option>';
+                }
+                data.options = opts;
+            }
+
+            data.min = data.min || 0;
+            data.offLabel = data.offLabel || 'No';
+            data.onLabel = data.onLabel || 'Yes';
+            data.onClass = data.onClass || 'primary';
+            data.offClass = data.offClass || 'default';
+            data.readOnly = data.readOnly ? 'readonly' : '';
+
+
+
+            data.help = data.help || '';
+
+
+            if (data.template == 'Int') {
+                data.max = data.max || MAX_INT32;
+                data.numberType = 'whole';
+            }
+            else if (data.template == 'Byte') {
+                data.max = data.max || MAX_BYTE;
+                data.template = 'Int';
+                data.numberType = 'whole';
+            }
+            else if (data.template == 'Float') {
+                data.max = data.max || MAX_FLOAT;
+                data.template = 'Int';
+                data.step = 'any';
+                data.numberType = 'float';
+            }
+            else
+                data.max = data.max || 0;
+
+            data.step = data.step || Math.min(1000, Math.round(data.max * .10));
+
+
+
+            var $html = $($('#template' + data.template).html().format(data));
+
+            if (data.template === 'Bool') {
+                //wire up
+                $html.find('input[type=checkbox]').bootstrapSwitch();
+            }
+
+
+            $('#saveEditorForm').append($html);
+
+
+        }
+
+        function buildCharacterUI() {
+            $('#saveEditorForm').empty();
+
+
+            addSection('Your Current Character');
+
+            addTemplatedItem({ template: 'String', prop: 'playerName', title: 'Name' });
+
+            addTemplatedItem({ template: 'Select', prop: 'classType', title: 'Class', options: Rogue.classes });
+
+            addTemplatedItem({ template: 'Select', prop: 'traitsA', title: 'Trait A', options: Rogue.traits });
+            addTemplatedItem({ template: 'Select', prop: 'traitsB', title: 'Trait B', options: Rogue.traits });
+
+            addTemplatedItem({ template: 'Select', prop: 'spell', title: 'Spell', options: Rogue.spells });
+
+            addTemplatedItem({ template: 'Select', prop: 'specialItem', title: 'Special Item', options: Rogue.specialItems });
+
+
+            addTemplatedItem({ template: 'Int', prop: 'currentHealth', title: 'Current Health', help: 'The game will reset this value to the max possible for your character on load' });
+            addTemplatedItem({ template: 'Int', prop: 'currentMana', title: 'Current Mana', help: 'The game will reset this value to the max possible for your character on load' });
+
+            addTemplatedItem({ template: 'Bool', prop: 'isDead', title: 'You are dead', onClass: 'danger', offClass: 'success' });
+
+            addTemplatedItem({ template: 'Bool', prop: 'isFemale', title: 'Gender', onClass: 'default', offClass: 'default', onLabel: 'Lady', offLabel: 'Sir' });
+
+            addTemplatedItem({ template: 'Bool', prop: 'lockCastle', title: 'Castle Locked' });
+
+
+
+
+            var boss = { template: 'Bool', onLabel: 'Dead', offLabel: 'Alive', onClass: 'danger', offClass: 'success' };
+            addTemplatedItem($.extend({ prop: 'eyeballBossBeaten', title: 'Khidr' }, boss));
+            addTemplatedItem($.extend({ prop: 'fairyBossBeaten', title: 'Alexander' }, boss));
+            addTemplatedItem($.extend({ prop: 'fireballBossBeaten', title: 'Ponce de Leon' }, boss));
+            addTemplatedItem($.extend({ prop: 'blobBossBeaten', title: 'Herodotus' }, boss));
+            addTemplatedItem($.extend({ prop: 'lastbossBeaten', title: 'Johannes' }, boss));
+            addTemplatedItem($.extend({ prop: 'newBossBeaten', title: 'New Boss(?)' }, boss));
+
+            addSection('Your Profile');
+
+            addTemplatedItem({ template: 'Int', prop: 'gold', title: 'Gold' });
+
+            var bonus = { template: 'Int', min: 0, max: 500, help: 'Technically, you can go higher with this value, but it might cause a negative effect' }
+            addTemplatedItem($.extend({ prop: 'bonusHealth', title: 'Bonus Health' }, bonus));
+            addTemplatedItem($.extend({ prop: 'bonusStrength', title: 'Bonus Stength' }, bonus));
+            addTemplatedItem($.extend({ prop: 'bonusMana', title: 'Bonus Mana' }, bonus));
+            addTemplatedItem($.extend({ prop: 'bonusDefense', title: 'Bonus Defense' }, bonus));
+            addTemplatedItem($.extend({ prop: 'bonusWeight', title: 'Bonus Weight' }, bonus));
+            addTemplatedItem($.extend({ prop: 'bonusMagic', title: 'Bonus Magic' }, bonus));
+
+
+            addTemplatedItem({ template: 'Bool', prop: 'hardcoreMode', title: 'Hardcore Mode' });
+            addTemplatedItem({ template: 'Bool', prop: 'spokenToLastBoss', title: 'Spoke To Last Boss' });
+            addTemplatedItem({ template: 'Bool', prop: 'readLastDiary', title: 'Read Last Diary' });
+
+            addTemplatedItem({ template: 'Int', prop: 'timesDead', title: 'Times Died' });
+            addTemplatedItem({ template: 'Int', prop: 'timesCastleBeaten', title: 'Times Castle Beaten' });
+            addTemplatedItem({ template: 'Float', prop: 'totalHoursPlayed', title: 'Total Hours Played', max: 2000, help: 'Max is technically ' + MAX_FLOAT + ' but let\'s be realistic' });
+
+
+            $('#editor').show();
+            $('#uploadContainer').hide();
+        }
+
+        function saveProfile() {
+
+            Rogue.mergeCharacter(scrapUI());
+            Rogue.commitData();
+            Rogue.saveCharacterToFile(originalFilename);
+
+        }
+
+
+        function scrapUI() {
+            var character = {};
+            $('#saveEditorForm').find('select, input').each(function (e, t) {
+
+                var val;
+
+                if (t.type === 'text') {
+                    val = $.trim(t.value);
+                }
+                else if (t.type === 'number') {
+                    if (t.attributes['data-number-type'] && t.attributes['data-number-type'].value === 'float') {
+                        val = parseFloat(t.value);
+                    }
+                    else {
+                        val = parseInt(t.value);
+                    }
+                }
+                else if (t.type === 'checkbox') {
+                    val = t.checked;
+                }
+                else if (t.type === 'select-one') {
+                    val = t.value;
+                }
+
+                character[t.name] = val;
+
+            });
+
+            return character;
+        }
+
+
+        var originalFilename = '';
+
+        function handleFileSelect(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+
+            var file = evt.dataTransfer.files[0];
+
+            originalFilename = file.name;
+
+            var reader = new FileReader();
+
+            reader.onloadend = function () {
+
+                Rogue.readData(reader.result);
+
+                // set up UI.
+                buildCharacterUI();
+            }
+
+            reader.readAsBinaryString(file);
+
+        }
+
+        function handleDragOver(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+            evt.dataTransfer.dropEffect = 'copy';
+        }
+
+        var dropZone = document.getElementById('dropzone');
+        dropZone.addEventListener('dragover', handleDragOver, false);
+        dropZone.addEventListener('drop', handleFileSelect, false);
+
+        $(document).ready(function () {
+            $('#downloadButton').click(saveProfile);
+            $('#resetButton').click(function () {
+                $('#editor').hide();
+                $('#uploadContainer').show();
+            });
+        });
+
+    </script>
+</body>
+</html>
