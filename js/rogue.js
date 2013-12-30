@@ -109,15 +109,6 @@ var Rogue;
     Rogue.MAX_BYTE = 255;
     Rogue.MAX_FLOAT = 3.40282347E+38;
 
-    var view;
-    var originalViewTotalByteLength = 0;
-    var originalViewReadByteLength = 0;
-    var character = {};
-
-    Rogue.character = character;
-
-
-
     Rogue.specialItems = {
         0: 'None',
         1: 'Charon\'s Obol',
@@ -152,7 +143,6 @@ var Rogue;
         14: 'Rapid Dagger',
         100: 'B.E.A.M'
     };
-
     Rogue.classes = {
         0: 'Knight',
         1: 'Mage',
@@ -173,9 +163,7 @@ var Rogue;
         16: 'Dragon',
         17: 'Traitor'
     };
-
-    Rogue.traits =
-    {
+    Rogue.traits = {
         0: 'None',
         1: 'Color Blind',
         2: 'Gay',
@@ -222,61 +210,74 @@ var Rogue;
         5: 'Float32'
     }
 
-    var playerSchema = [
-        ['gold', 1],
-        ['currentHealth', 1],
-        ['currentMana', 1],
-        ['age', 2],
-        ['childAge', 2],
-        ['spell', 2],
-        ['classType', 2],
-        ['specialItem', 2],
-        ['traitsA', 2],
-        ['traitsB', 2],
-        ['playerName', 4],
-        ['headPiece', 2],
-        ['shoulderPiece', 2],
-        ['chestPiece', 2],
-        ['diaryEntry', 2],
-        ['bonusHealth', 1],
-        ['bonusStrength', 1],
-        ['bonusMana', 1],
-        ['bonusDefense', 1],
-        ['bonusWeight', 1],
-        ['bonusMagic', 1],
-        ['lichHealth', 1],
-        ['lichMana', 1],
-        ['lichHealthMod', 5],
-        ['newBossBeaten', 3],
-        ['eyeballBossBeaten', 3],
-        ['fairyBossBeaten', 3],
-        ['fireballBossBeaten', 3],
-        ['blobBossBeaten', 3],
-        ['lastbossBeaten', 3],
-        ['timesCastleBeaten', 1],
-        ['numEnemiesBeaten', 1],
-        ['tutorialComplete', 3],
-        ['characterFound', 3],
-        ['loadStartingRoom', 3],
-        ['lockCastle', 3],
-        ['spokeToBlacksmith', 3],
-        ['spokeToEnchantress', 3],
-        ['spokeToArchitect', 3],
-        ['spokeToTollCollector', 3],
-        ['isDead', 3],
-        ['finalDoorOpened', 3],
-        ['rerolledChildren', 3],
-        ['isFemale', 3],
-        ['timesDead', 1],
-        ['hasArchitectFee', 3],
-        ['readLastDiary', 3],
-        ['spokenToLastBoss', 3],
-        ['hardcoreMode', 3],
-        ['totalHoursPlayed', 5],
-        ['wizardSpellA', 2],
-        ['wizardSpellB', 2],
-        ['wizardSpellC', 2]
-    ];
+    var playerSchema = {
+        name: "Player",
+        items: [
+            ['gold', 1],
+            ['currentHealth', 1],
+            ['currentMana', 1],
+            ['age', 2],
+            ['childAge', 2],
+            ['spell', 2],
+            ['classType', 2],
+            ['specialItem', 2],
+            ['traitsA', 2],
+            ['traitsB', 2],
+            ['playerName', 4],
+            ['headPiece', 2],
+            ['shoulderPiece', 2],
+            ['chestPiece', 2],
+            ['diaryEntry', 2],
+            ['bonusHealth', 1],
+            ['bonusStrength', 1],
+            ['bonusMana', 1],
+            ['bonusDefense', 1],
+            ['bonusWeight', 1],
+            ['bonusMagic', 1],
+            ['lichHealth', 1],
+            ['lichMana', 1],
+            ['lichHealthMod', 5],
+            ['newBossBeaten', 3],
+            ['eyeballBossBeaten', 3],
+            ['fairyBossBeaten', 3],
+            ['fireballBossBeaten', 3],
+            ['blobBossBeaten', 3],
+            ['lastbossBeaten', 3],
+            ['timesCastleBeaten', 1],
+            ['numEnemiesBeaten', 1],
+            ['tutorialComplete', 3],
+            ['characterFound', 3],
+            ['loadStartingRoom', 3],
+            ['lockCastle', 3],
+            ['spokeToBlacksmith', 3],
+            ['spokeToEnchantress', 3],
+            ['spokeToArchitect', 3],
+            ['spokeToTollCollector', 3],
+            ['isDead', 3],
+            ['finalDoorOpened', 3],
+            ['rerolledChildren', 3],
+            ['isFemale', 3],
+            ['timesDead', 1],
+            ['hasArchitectFee', 3],
+            ['readLastDiary', 3],
+            ['spokenToLastBoss', 3],
+            ['hardcoreMode', 3],
+            ['totalHoursPlayed', 5],
+            ['wizardSpellA', 2],
+            ['wizardSpellB', 2],
+            ['wizardSpellC', 2]
+        ]
+    };
+
+
+
+    var currentDataView;
+    var dataViewTotalByteLength = 0;
+    var dataViewReadByteLength = 0;
+    var currentSchema;
+
+    Rogue.currentSchemaName = '';
+    Rogue.processedObject = '';
 
 
     /**
@@ -301,6 +302,33 @@ var Rogue;
     }
 
 
+    function getEstimatedByteSize(schema, source) {
+        var size = 0;
+
+        for (var i in schema.items) {
+            var item = schema.items[i];
+
+
+            switch (item[1]) {
+                case 1:  //'Int32'
+                case 5: //'Float32'
+                    size += 8;
+                    break;
+                case 2: //'Int8'
+                case 3: ///'Bool'
+                    size += 1;
+                    break;
+                case 4:// 'String'
+                    if (source)
+                        size += (source[item[0]] || '').length + 1; //+ 1for the 7-bit int header
+                    break;
+            }
+        }
+
+        return size;
+    }
+
+
     /**
     * Creates an object based on a schema array
     *
@@ -312,8 +340,8 @@ var Rogue;
 
         var ret = {};
 
-        for (var i in schema) {
-            var item = schema[i];
+        for (var i in schema.items) {
+            var item = schema.items[i];
             var value = dataView['read' + propertyTypes[item[1]]]();
 
             ret[item[0]] = value || getDefaultPropertyType(item[1]);
@@ -335,8 +363,8 @@ var Rogue;
 
         dataView.seek(0);
 
-        for (var i in schema) {
-            var item = schema[i];
+        for (var i in schema.items) {
+            var item = schema.items[i];
             var value = source[item[0]] || getDefaultPropertyType(item[1]);
 
             dataView['write' + propertyTypes[item[1]]](value);
@@ -354,58 +382,65 @@ var Rogue;
     }
 
 
-    Rogue.readData = function (data) {
+    Rogue.readData = function (data, fileName) {
 
-        view = new jDataView(data);
-        view._littleEndian = true;
+        currentSchema = getAppropriateSchema(fileName);
 
-        character = buildObjectFromSchema(view, playerSchema);
+        if (!currentSchema)
+            throw "Unable to process this file due to lack of schema";
 
-        originalViewTotalByteLength = view.byteLength;
-        originalViewReadByteLength = view._offset;
+        this.currentSchemaName = currentSchema.name;
 
-        Rogue.character = character;
+        currentDataView = new jDataView(data);
+        currentDataView._littleEndian = true;
+
+        this.processedObject = buildObjectFromSchema(currentDataView, currentSchema);
+        
+        dataViewTotalByteLength = currentDataView.byteLength;
+        dataViewReadByteLength = currentDataView._offset;
 
     };
 
-    Rogue.mergeCharacter = function (newCharacter) {
-        for (var prop in newCharacter) {
-            character[prop] = newCharacter[prop];
+    Rogue.commitChanges = function (newObject) {
+
+        for (var prop in newObject) {
+            this.processedObject[prop] = newObject[prop];
         }
-    };
-
-    Rogue.commitData = function () {
 
         // need to write this to a different dataview since the variable size of the string can cause problems.
-        // kind of a shitty solution though.
+        // kind of a shitty solution though.     
 
         var tempView = new jDataView(5000, 0, 5000, true);
 
-        writeObjectFromSchema(tempView, character, playerSchema);
+        writeObjectFromSchema(tempView, this.processedObject, currentSchema);
 
         var newViewWriteOffset = tempView._offset;
-        var newLength = originalViewTotalByteLength + (newViewWriteOffset - originalViewReadByteLength);
+        var newLength = dataViewTotalByteLength + (newViewWriteOffset - dataViewReadByteLength);
 
         tempView = tempView.slice(0, newLength, true);
 
         tempView.seek(newViewWriteOffset);
-        view.seek(originalViewReadByteLength);
+        currentDataView.seek(dataViewReadByteLength);
 
         // grab the end of the original profile in case there are things we didn't modify
-        var endBytes = view.getBytes(originalViewTotalByteLength - originalViewReadByteLength, originalViewReadByteLength);
+        var endBytes = currentDataView.getBytes(dataViewTotalByteLength - dataViewReadByteLength, dataViewReadByteLength);
 
         tempView.setBytes(newViewWriteOffset, endBytes);
 
         //replace the view, update its stats
-        view = tempView;
-        originalViewTotalByteLength = view.byteLength;
-        originalViewReadByteLength = newViewWriteOffset;
+        currentDataView = tempView;
+        dataViewTotalByteLength = currentDataView.byteLength;
+        dataViewReadByteLength = newViewWriteOffset;
     };
 
-    Rogue.saveCharacterToFile = function (fileName) {
-        var blob = new Blob([view.buffer]);
+       
+
+    Rogue.downloadFile = function (fileName) {
+        var blob = new Blob([currentDataView.buffer]);
         saveAs(blob, fileName);
     };
+
+
 
 
 })(jDataView, (Rogue || (Rogue = {})));

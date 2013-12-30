@@ -158,7 +158,7 @@
 
         function addTemplatedItem(data) {
 
-            data.value = Rogue.character[data.prop];
+            data.value = Rogue.processedObject[data.prop];
 
             if (typeof (data.value) === 'boolean') {
                 data.checked = data.value ? 'checked' : '';
@@ -279,9 +279,9 @@
 
         function saveProfile() {
 
-            Rogue.mergeCharacter(buildObjectFromUI());
-            Rogue.commitData();
-            Rogue.saveCharacterToFile(originalFilename);
+            var newObject = buildObjectFromUI();
+            Rogue.commitChanges(newObject);
+            Rogue.downloadFile(originalFilename);
 
         }
 
@@ -328,19 +328,31 @@
             var file = evt.dataTransfer.files[0];
 
             originalFilename = file.name;
-            
+
             var reader = new FileReader();
 
             reader.onloadend = function (evt) {
 
-              Rogue.readData(reader.result);
+                try {
 
-                // set up UI.
-              createCharacterUI();
+                    Rogue.readData(reader.result, originalFilename);
+
+                } catch (e) {
+                    return;
+                }
+                
+                switch (Rogue.currentSchemaName)
+                {
+                    case "Player":
+                        createCharacterUI();
+                        break;
+                }
+
+                
             }
-                        
+
             reader.readAsArrayBuffer(file);
-            
+
 
         }
 
@@ -350,7 +362,7 @@
             evt.dataTransfer.dropEffect = 'copy';
         }
 
-      
+
 
         var dropZone = document.getElementById('uploadContainer');
         dropZone.addEventListener('dragover', handleDragOver, false);
