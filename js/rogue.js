@@ -4,18 +4,18 @@
 /// <reference path="FileSaver.js" />
 /// <reference path="jdataview.js" />
 
-var Rogue;
 
 /* extensions for jDataView */
-(function (jDataView, Rogue) {
-    "use strict";
+(function (jDataView) {
+    'use strict';
 
+    /**
+    * Reads a 7-bit integer from the view
+    *
+    * @param {jDataView} view The DataView to read from
+    * @return {number}
+    */
     function read7BitInt(view) {
-        /// <summary>
-        /// Reads a 7-bit integer from the view
-        /// </summary>
-        /// <param name="view"></param>
-        /// <returns type="int"></returns>
         var n1 = 0;
         var n2 = 0;
         while (n2 != 35) {
@@ -27,9 +27,15 @@ var Rogue;
         }
     }
 
+    /**
+    * Writes a 7-bit integer to the view
+    *
+    * @param {jDataView} view The DataView to write to
+    * @param {numbe} value The integer to write
+    */
     function write7BitInt(view, value) {
         /// <summary>
-        /// Writes a 7-bit integer to the view
+        /// 
         /// </summary>
         /// <param name="view"></param>
         /// <param name="value"></param>
@@ -39,15 +45,23 @@ var Rogue;
         view.writeInt8(n);
     }
 
-
+    /**
+    * Reads a string whose length is preceding as a 7-bit integer
+    *
+    * @return {string}
+    */
     jDataView.prototype.readString = function () {
         var length = read7BitInt(this);
         return this.getString(length);
     }
 
+    /**
+    * Writes a string whose length is preceding as a 7-bit integer
+    *
+    * @param {string} value The string to write
+    */
     jDataView.prototype.writeString = function (value) {
         write7BitInt(this, value.length);
-
         this.setString(this._offset, value);
     }
 
@@ -68,7 +82,7 @@ var Rogue;
     }
 
     jDataView.prototype.readInt8 = function (value) {
-        return this.getInt8(this._offset, value);
+        return parseInt(this.getInt8(this._offset, value));
     }
 
     jDataView.prototype.writeInt8 = function (value) {
@@ -83,15 +97,13 @@ var Rogue;
         this.setFloat32(this._offset, value);
     }
 
+})(jDataView);
 
 
+var Rogue;
 
-
-})(jDataView, (Rogue || (Rogue = {})));
-
-
-(function ($, jDataView, Rogue) {
-    "use strict";
+(function (jDataView, Rogue) {
+    'use strict';
 
     var view;
     var originalViewTotalByteLength = 0;
@@ -196,67 +208,143 @@ var Rogue;
         35: 'Glaucoma'
     };
 
+    var propertyTypes = {
+        1: 'Int32',
+        2: 'Int8',
+        3: 'Bool',
+        4: 'String',
+        5: 'Float32'
+    }
+
+    var playerSchema = [
+        ['gold', 1],
+        ['currentHealth', 1],
+        ['currentMana', 1],
+        ['age', 2],
+        ['childAge', 2],
+        ['spell', 2],
+        ['classType', 2],
+        ['specialItem', 2],
+        ['traitsA', 2],
+        ['traitsB', 2],
+        ['playerName', 4],
+        ['headPiece', 2],
+        ['shoulderPiece', 2],
+        ['chestPiece', 2],
+        ['diaryEntry', 2],
+        ['bonusHealth', 1],
+        ['bonusStrength', 1],
+        ['bonusMana', 1],
+        ['bonusDefense', 1],
+        ['bonusWeight', 1],
+        ['bonusMagic', 1],
+        ['lichHealth', 1],
+        ['lichMana', 1],
+        ['lichHealthMod', 5],
+        ['newBossBeaten', 3],
+        ['eyeballBossBeaten', 3],
+        ['fairyBossBeaten', 3],
+        ['fireballBossBeaten', 3],
+        ['blobBossBeaten', 3],
+        ['lastbossBeaten', 3],
+        ['timesCastleBeaten', 1],
+        ['numEnemiesBeaten', 1],
+        ['tutorialComplete', 3],
+        ['characterFound', 3],
+        ['loadStartingRoom', 3],
+        ['lockCastle', 3],
+        ['spokeToBlacksmith', 3],
+        ['spokeToEnchantress', 3],
+        ['spokeToArchitect', 3],
+        ['spokeToTollCollector', 3],
+        ['isDead', 3],
+        ['finalDoorOpened', 3],
+        ['rerolledChildren', 3],
+        ['isFemale', 3],
+        ['timesDead', 1],
+        ['hasArchitectFee', 3],
+        ['readLastDiary', 3],
+        ['spokenToLastBoss', 3],
+        ['hardcoreMode', 3],
+        ['totalHoursPlayed', 5],
+        ['wizardSpellA', 2],
+        ['wizardSpellB', 2],
+        ['wizardSpellC', 2]
+    ];
+
+
+    /**
+    * Gets the default value for a propertyType
+    *
+    * @param {number} propertyType The value from propertyTypes to get a default value for
+    * @return {any} The default value for the type
+    */
+    function getDefaultPropertyType(propertyType) {
+
+        switch (propertyType) {
+            case 1:  //'Int32'
+            case 2: //'Int8'
+            case 3: ///'Bool'
+            case 5: //'Float32'
+                return 0;
+            case 4:// 'String'
+            default:
+                return '';
+        }
+
+    }
+
+
+    /**
+    * Creates an object based on a schema array
+    *
+    * @param {jDataView} view The DataView to read from
+    * @param {array} schema The schema array used to help build the object
+    * @return {object} The built object
+    */
+    function buildObjectFromSchema(dataView, schema) {
+
+        var ret = {};
+
+        for (var i in schema) {
+            var item = schema[i];
+            var value = dataView['read' + propertyTypes[item[1]]]();
+
+            ret[item[0]] = value || getDefaultPropertyType(item[1]);
+        }
+
+        return ret;
+
+    }
+
+
+    /**
+    * Writes an object to a DataView based on a schema array
+    *
+    * @param {jDataView} view The DataView to write to
+    * @param {object} source The object to use for writing
+    * @param {array} schema The schema array used to help build the object
+    */
+    function writeObjectFromSchema(dataView, source, schema) {
+
+        dataView.seek(0);
+
+        for (var i in schema) {
+            var item = schema[i];
+            var value = source[item[0]] || getDefaultPropertyType(item[1]);
+
+            dataView['write' + propertyTypes[item[1]]](value);
+        }
+
+    }
+
 
     Rogue.readData = function (data) {
         view = new jDataView(data);
         view._littleEndian = true;
         Rogue.view = view;
 
-        character = {
-            gold: view.readInt32(),
-            currentHealth: view.readInt32(),
-            currentMana: view.readInt32(),
-            age: view.readInt8(),
-            childAge: view.readInt8(),
-            spell: view.readInt8(),
-            classType: view.readInt8(),
-            specialItem: view.readInt8(),
-            traitsA: view.readInt8(),
-            traitsB: view.readInt8(),
-            playerName: view.readString(),
-            headPiece: view.readInt8(),
-            shoulderPiece: view.readInt8(),
-            chestPiece: view.readInt8(),
-            diaryEntry: view.readInt8(),
-            bonusHealth: view.readInt32(),
-            bonusStrength: view.readInt32(),
-            bonusMana: view.readInt32(),
-            bonusDefense: view.readInt32(),
-            bonusWeight: view.readInt32(),
-            bonusMagic: view.readInt32(),
-            lichHealth: view.readInt32(),
-            lichMana: view.readInt32(),
-            lichHealthMod: view.readFloat32(),
-            newBossBeaten: view.readBool(),
-            eyeballBossBeaten: view.readBool(),
-            fairyBossBeaten: view.readBool(),
-            fireballBossBeaten: view.readBool(),
-            blobBossBeaten: view.readBool(),
-            lastbossBeaten: view.readBool(),
-            timesCastleBeaten: view.readInt32(),
-            numEnemiesBeaten: view.readInt32(),
-            tutorialComplete: view.readBool(),
-            characterFound: view.readBool(),
-            loadStartingRoom: view.readBool(),
-            lockCastle: view.readBool(),
-            spokeToBlacksmith: view.readBool(),
-            spokeToEnchantress: view.readBool(),
-            spokeToArchitect: view.readBool(),
-            spokeToTollCollector: view.readBool(),
-            isDead: view.readBool(),
-            finalDoorOpened: view.readBool(),
-            rerolledChildren: view.readBool(),
-            isFemale: view.readBool(),
-            timesDead: view.readInt32(),
-            hasArchitectFee: view.readBool(),
-            readLastDiary: view.readBool(),
-            spokenToLastBoss: view.readBool(),
-            hardcoreMode: view.readBool(),
-            totalHoursPlayed: view.readFloat32(),
-            wizardSpellA: view.readInt8(),
-            wizardSpellB: view.readInt8(),
-            wizardSpellC: view.readInt8()
-        };
+        character = buildObjectFromSchema(view, playerSchema);
 
         originalViewTotalByteLength = view.byteLength;
         originalViewReadByteLength = view._offset;
@@ -278,68 +366,7 @@ var Rogue;
 
         var tempView = new jDataView(5000, 0, 5000, true);
 
-        tempView.writeInt32(character.gold);
-        tempView.writeInt32(character.currentHealth);
-        tempView.writeInt32(character.currentMana);
-        tempView.writeInt8(character.age);
-        tempView.writeInt8(character.childAge);
-        tempView.writeInt8(character.spell);
-        tempView.writeInt8(character.classType);
-        tempView.writeInt8(character.specialItem);
-        tempView.writeInt8(character.traitsA);
-        tempView.writeInt8(character.traitsB);
-        tempView.writeString(character.playerName);
-        tempView.writeInt8(character.headPiece);
-        tempView.writeInt8(character.shoulderPiece);
-        tempView.writeInt8(character.chestPiece);
-        tempView.writeInt8(character.diaryEntry);
-
-        tempView.writeInt32(character.bonusHealth);
-        tempView.writeInt32(character.bonusStrength);
-        tempView.writeInt32(character.bonusMana);
-        tempView.writeInt32(character.bonusDefense);
-        tempView.writeInt32(character.bonusWeight);
-        tempView.writeInt32(character.bonusMagic);
-
-        tempView.writeInt32(character.lichHealth);
-        tempView.writeInt32(character.lichMana);
-
-        tempView.writeFloat32(character.lichHealthMod);
-
-        tempView.writeBool(character.newBossBeaten);
-        tempView.writeBool(character.eyeballBossBeaten);
-        tempView.writeBool(character.fairyBossBeaten);
-        tempView.writeBool(character.fireballBossBeaten);
-        tempView.writeBool(character.blobBossBeaten);
-        tempView.writeBool(character.lastbossBeaten);
-
-        tempView.writeInt32(character.timesCastleBeaten);
-        tempView.writeInt32(character.numEnemiesBeaten);
-
-        tempView.writeBool(character.tutorialComplete);
-        tempView.writeBool(character.characterFound);
-        tempView.writeBool(character.loadStartingRoom);
-        tempView.writeBool(character.lockCastle);
-        tempView.writeBool(character.spokeToBlacksmith);
-        tempView.writeBool(character.spokeToEnchantress);
-        tempView.writeBool(character.spokeToArchitect);
-        tempView.writeBool(character.spokeToTollCollector);
-        tempView.writeBool(character.isDead);
-        tempView.writeBool(character.finalDoorOpened);
-        tempView.writeBool(character.rerolledChildren);
-        tempView.writeBool(character.isFemale);
-
-        tempView.writeInt32(character.timesDead);
-        tempView.writeBool(character.hasArchitectFee);
-        tempView.writeBool(character.readLastDiary);
-        tempView.writeBool(character.spokenToLastBoss);
-        tempView.writeBool(character.hardcoreMode);
-        tempView.writeFloat32(character.totalHoursPlayed);
-
-        tempView.writeInt8(character.wizardSpellA);
-        tempView.writeInt8(character.wizardSpellB);
-        tempView.writeInt8(character.wizardSpellC);
-
+        writeObjectFromSchema(tempView, character, playerSchema);
 
         var newViewWriteOffset = tempView._offset;
         var newLength = originalViewTotalByteLength + (newViewWriteOffset - originalViewReadByteLength);
@@ -354,8 +381,10 @@ var Rogue;
 
         tempView.setBytes(newViewWriteOffset, endBytes);
 
-        //replace the view
+        //replace the view, update its stats
         view = tempView;
+        originalViewTotalByteLength = view.byteLength;
+        originalViewReadByteLength = newViewWriteOffset;
     };
 
     Rogue.saveCharacterToFile = function (fileName) {
@@ -367,4 +396,4 @@ var Rogue;
 
 
 
-})(jQuery, jDataView, (Rogue || (Rogue = {})));
+})(jDataView, (Rogue || (Rogue = {})));
