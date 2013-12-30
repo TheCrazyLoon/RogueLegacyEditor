@@ -1,19 +1,28 @@
 ﻿body
 {
-
+	padding-bottom: 50px;
 }
-  .container {
-    max-width: 730px;
-  }
+
+
+
+.panel-body
+{
+	padding-top:30px !important;
+}
+
+.container
+{
+	max-width: 730px;
+}
 
 #dropzone
 {
+	padding: 25px;
 	border: 2px dashed #bbb;
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
-	padding: 25px;
+	color: #bbb;
 	text-align: center;
 	font: 20pt bold;
-	color: #bbb;
 }

@@ -105,12 +105,18 @@ var Rogue;
 (function (jDataView, Rogue) {
     'use strict';
 
+    Rogue.MAX_INT32 = 2147483647;
+    Rogue.MAX_BYTE = 255;
+    Rogue.MAX_FLOAT = 3.40282347E+38;
+
     var view;
     var originalViewTotalByteLength = 0;
     var originalViewReadByteLength = 0;
     var character = {};
 
     Rogue.character = character;
+
+
 
     Rogue.specialItems = {
         0: 'None',
@@ -339,10 +345,19 @@ var Rogue;
     }
 
 
+    function getAppropriateSchema(fileName) {
+
+        if (/RogueLegacyPlayer\.rcdat/.test(fileName))
+            return playerSchema;
+
+        return null;
+    }
+
+
     Rogue.readData = function (data) {
+
         view = new jDataView(data);
         view._littleEndian = true;
-        Rogue.view = view;
 
         character = buildObjectFromSchema(view, playerSchema);
 
@@ -391,9 +406,6 @@ var Rogue;
         var blob = new Blob([view.buffer]);
         saveAs(blob, fileName);
     };
-
-
-
 
 
 })(jDataView, (Rogue || (Rogue = {})));

@@ -12,26 +12,27 @@
 <body>
 
     <div class="container">
-        <div class="header">
-            <h3 class="text-muted">Rogue Legacy Save Editor</h3>
-        </div>
+
+        <div class="page-header">
+  <h1>Rogue Legacy Save Editor</h1>
+</div>
 
 
 
         <div id="uploadContainer" class="well">
-            <p class="lead">To get started, drag and drop the RogueLegacyPlayer.rcdat file here. <small><a href="http://pcgamingwiki.com/wiki/Rogue_Legacy#Save_game_data_location" target="_blank">Save game location can be found here.</a> </small></p>
+            <p class="lead">To get started, drag and drop the RogueLegacyPlayer.rcdat file below. <small><a href="http://pcgamingwiki.com/wiki/Rogue_Legacy#Save_game_data_location" target="_blank">Save game location can be found here.</a> </small></p>
 
             <div id="dropzone" class="alert alert-info">Drop save file here</div>
             <p class="alert alert-danger">
-                Make sure you have a backup of your data before you use this tool. This tool may be inaccurate if the game has been updated. Known to work with the Windows version 1.2.0b of Rogue Legacy.
+                Make sure you have a backup of your data before you use this tool. This tool may be inaccurate if the game has been updated. Known to work with the Windows version 1.2.0b of Rogue Legacy. <a href="https://github.com/JakeH/RogueLegacyEditor" target="_blank">Source code available on GitHub.</a>
             </p>
 
         </div>
 
-        <div id="editor" class="well" style="display: none;">
+        <div id="editor" style="display: none;">
             <form class="form-horizontal" role="form" id="saveEditorForm">
             </form>
-            <hr />
+            
             <div class="row">
                 <div class="col-xs-6 col-xs-push-3">
                     <button type="button" id="downloadButton" class="btn btn-primary btn-lg">Download Profile</button>
@@ -63,7 +64,7 @@
 
                 <span class="help-block">Min: <strong>{min}</strong> | Max: <strong>{max}</strong>&nbsp; <span class="text-info">{help}</span></span>
             </div>
-            <div class="col-sm-3">
+            <div class="btn-group col-sm-3">
                 <button type="button" class="btn btn-default" onclick="javascript:setValue('{prop}',{max})" title="Set to maximum value">Max</button>
                 <button type="button" class="btn btn-default" onclick="javascript:setValue('{prop}',{min})" title="Set to minimum value">Min</button>
             </div>
@@ -133,16 +134,26 @@
             });
         };
 
-        var MAX_INT32 = 2147483647;
-        var MAX_BYTE = 255;
-        var MAX_FLOAT = 3.40282347E+38;
+
 
         function setValue(name, value) {
             $('#saveEditorForm input[name=' + name + ']').val(parseFloat(value));
         }
 
-        function addSection(title) {
-            $('#saveEditorForm').append($('<h3>' + title + '</h3><br />'));
+        var $sectionContainer;
+
+        function startSection(title, description) {
+
+            var $html = $('<div class="panel panel-primary"><div class="panel-heading"><h3>{title}</h3>{description}</div><div class="panel-body"></div></div>'
+                        .format({ title: title, description: description }));
+
+            $sectionContainer = $html.find('.panel-body');
+
+            $('#saveEditorForm').append($html);
+        }
+
+        function endSection() {
+            $sectionContainer = null;
         }
 
         function addTemplatedItem(data) {
@@ -175,16 +186,16 @@
 
 
             if (data.template == 'Int') {
-                data.max = data.max || MAX_INT32;
+                data.max = data.max || Rogue.MAX_INT32;
                 data.numberType = 'whole';
             }
             else if (data.template == 'Byte') {
-                data.max = data.max || MAX_BYTE;
+                data.max = data.max || Rogue.MAX_BYTE;
                 data.template = 'Int';
                 data.numberType = 'whole';
             }
             else if (data.template == 'Float') {
-                data.max = data.max || MAX_FLOAT;
+                data.max = data.max || Rogue.MAX_FLOAT;
                 data.template = 'Int';
                 data.step = 'any';
                 data.numberType = 'float';
@@ -203,41 +214,31 @@
                 $html.find('input[type=checkbox]').bootstrapSwitch();
             }
 
-
-            $('#saveEditorForm').append($html);
+            if ($sectionContainer)
+                $sectionContainer.append($html);
+            else
+                $('#saveEditorForm').append($html);
 
 
         }
 
-        function buildCharacterUI() {
+        function createCharacterUI() {
             $('#saveEditorForm').empty();
 
 
-            addSection('Your Current Character');
+            startSection('Your Current Character', 'The following values affect the character you are currently playing.');
 
             addTemplatedItem({ template: 'String', prop: 'playerName', title: 'Name' });
-
             addTemplatedItem({ template: 'Select', prop: 'classType', title: 'Class', options: Rogue.classes });
-
             addTemplatedItem({ template: 'Select', prop: 'traitsA', title: 'Trait A', options: Rogue.traits });
             addTemplatedItem({ template: 'Select', prop: 'traitsB', title: 'Trait B', options: Rogue.traits });
-
             addTemplatedItem({ template: 'Select', prop: 'spell', title: 'Spell', options: Rogue.spells });
-
             addTemplatedItem({ template: 'Select', prop: 'specialItem', title: 'Special Item', options: Rogue.specialItems });
-
-
             addTemplatedItem({ template: 'Int', prop: 'currentHealth', title: 'Current Health', help: 'The game will reset this value to the max possible for your character on load' });
             addTemplatedItem({ template: 'Int', prop: 'currentMana', title: 'Current Mana', help: 'The game will reset this value to the max possible for your character on load' });
-
             addTemplatedItem({ template: 'Bool', prop: 'isDead', title: 'You are dead', onClass: 'danger', offClass: 'success' });
-
             addTemplatedItem({ template: 'Bool', prop: 'isFemale', title: 'Gender', onClass: 'default', offClass: 'default', onLabel: 'Lady', offLabel: 'Sir' });
-
             addTemplatedItem({ template: 'Bool', prop: 'lockCastle', title: 'Castle Locked' });
-
-
-
 
             var boss = { template: 'Bool', onLabel: 'Dead', offLabel: 'Alive', onClass: 'danger', offClass: 'success' };
             addTemplatedItem($.extend({ prop: 'eyeballBossBeaten', title: 'Khidr' }, boss));
@@ -247,7 +248,9 @@
             addTemplatedItem($.extend({ prop: 'lastbossBeaten', title: 'Johannes' }, boss));
             addTemplatedItem($.extend({ prop: 'newBossBeaten', title: 'New Boss(?)' }, boss));
 
-            addSection('Your Profile');
+            endSection();
+
+            startSection('Your Profile', 'These values affect your entire profile');
 
             addTemplatedItem({ template: 'Int', prop: 'gold', title: 'Gold' });
 
@@ -259,31 +262,33 @@
             addTemplatedItem($.extend({ prop: 'bonusWeight', title: 'Bonus Weight' }, bonus));
             addTemplatedItem($.extend({ prop: 'bonusMagic', title: 'Bonus Magic' }, bonus));
 
-
             addTemplatedItem({ template: 'Bool', prop: 'hardcoreMode', title: 'Hardcore Mode' });
             addTemplatedItem({ template: 'Bool', prop: 'spokenToLastBoss', title: 'Spoke To Last Boss' });
             addTemplatedItem({ template: 'Bool', prop: 'readLastDiary', title: 'Read Last Diary' });
 
             addTemplatedItem({ template: 'Int', prop: 'timesDead', title: 'Times Died' });
             addTemplatedItem({ template: 'Int', prop: 'timesCastleBeaten', title: 'Times Castle Beaten' });
-            addTemplatedItem({ template: 'Float', prop: 'totalHoursPlayed', title: 'Total Hours Played', max: 2000, help: 'Max is technically ' + MAX_FLOAT + ' but let\'s be realistic' });
+            addTemplatedItem({ template: 'Float', prop: 'totalHoursPlayed', title: 'Total Hours Played', max: 2000, help: 'Max is technically ' + Rogue.MAX_FLOAT + ' but let\'s be realistic' });
 
+            endSection();
 
             $('#editor').show();
             $('#uploadContainer').hide();
         }
 
+
         function saveProfile() {
 
-            Rogue.mergeCharacter(scrapUI());
+            Rogue.mergeCharacter(buildObjectFromUI());
             Rogue.commitData();
             Rogue.saveCharacterToFile(originalFilename);
 
         }
 
 
-        function scrapUI() {
-            var character = {};
+        function buildObjectFromUI() {
+            var ret = {};
+
             $('#saveEditorForm').find('select, input').each(function (e, t) {
 
                 var val;
@@ -306,11 +311,11 @@
                     val = t.value;
                 }
 
-                character[t.name] = val;
+                ret[t.name] = val;
 
             });
 
-            return character;
+            return ret;
         }
 
 
@@ -323,18 +328,19 @@
             var file = evt.dataTransfer.files[0];
 
             originalFilename = file.name;
-
+            
             var reader = new FileReader();
 
-            reader.onloadend = function () {
+            reader.onloadend = function (evt) {
 
-                Rogue.readData(reader.result);
+              Rogue.readData(reader.result);
 
                 // set up UI.
-                buildCharacterUI();
+              createCharacterUI();
             }
-
-            reader.readAsBinaryString(file);
+                        
+            reader.readAsArrayBuffer(file);
+            
 
         }
 
@@ -344,7 +350,9 @@
             evt.dataTransfer.dropEffect = 'copy';
         }
 
-        var dropZone = document.getElementById('dropzone');
+      
+
+        var dropZone = document.getElementById('uploadContainer');
         dropZone.addEventListener('dragover', handleDragOver, false);
         dropZone.addEventListener('drop', handleFileSelect, false);
 
