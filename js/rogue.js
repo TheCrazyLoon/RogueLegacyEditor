@@ -81,13 +81,22 @@
         this.setInt32(this._offset, value);
     }
 
-    jDataView.prototype.readInt8 = function (value) {
+    jDataView.prototype.readByte = function (value) {
+        return parseInt(this.getUint8(this._offset, value));
+    }
+
+    jDataView.prototype.writeByte = function (value) {
+        this.setUint8(this._offset, value);
+    }
+
+    jDataView.prototype.readSByte = function (value) {
         return parseInt(this.getInt8(this._offset, value));
     }
 
-    jDataView.prototype.writeInt8 = function (value) {
+    jDataView.prototype.writeSByte = function (value) {
         this.setInt8(this._offset, value);
     }
+
 
     jDataView.prototype.readFloat32 = function (value) {
         return this.getFloat32(this._offset, value);
@@ -97,6 +106,72 @@
         this.setFloat32(this._offset, value);
     }
 
+    jDataView.prototype.readByteField = function (length) {
+        var ret = [];
+        for (var i = 0; i < length; i++) {
+            ret.push(this.readByte());
+        }
+
+        return ret;
+    }
+
+    jDataView.prototype.writeByteField = function (value) {
+        for (var i in value)
+            this.writeByte(value[i]);
+    }
+
+
+    jDataView.prototype.readSByteField = function (length) {
+        var ret = [];
+        for (var i = 0; i < length; i++) {
+            ret.push(this.readSByte());
+        }
+
+        return ret;
+    }
+
+    jDataView.prototype.writeSByteField = function (value) {
+        for (var i in value)
+            this.writeSByte(value[i]);
+    }
+
+
+
+    jDataView.prototype.readInt32Field = function (length) {
+        var ret = [];
+        for (var i = 0; i < length; i++) {
+            ret.push(this.readInt32());
+        }
+
+        return ret;
+    }
+
+    jDataView.prototype.writeInt32Field = function (value) {
+        for (var i in value)
+            this.writeInt32(value[i]);
+    }
+
+
+
+    jDataView.prototype.readArrayOfByteFields = function (arrayLength, fieldLength) {
+        var ret = [];
+        for (var al = 0; al < arrayLength; al++) {
+            var arr = this.readByteField(fieldLength);
+            ret.push(arr);
+        }
+
+        return ret;
+    }
+
+    jDataView.prototype.writeArrayOfByteFields = function (value) {
+        for (var al in value) {
+            var arr = value[al];
+            this.writeByteField(arr);
+        }
+
+    }
+
+    
 })(jDataView);
 
 
@@ -202,12 +277,100 @@ var Rogue;
         35: 'Glaucoma'
     };
 
+    Rogue.equipmentStatus = {
+        0: 'None',
+        1: 'FoundNew',
+        2: 'FoundKnown',
+        3: 'Purchased'
+    }
+
+    
+    Rogue.equipmentBaseTypes = {
+        0: 'Squire',
+        1: 'Silver',
+        2: 'Guardian',
+        3: 'Imperial',
+        4: 'Royal',
+        5: 'Knight',
+        6: 'Ranger',
+        7: 'Sky',
+        8: 'Dragon',
+        9: 'Slayer',
+        10: 'Blood',
+        11: 'Sage',
+        12: 'Retribution',
+        13: 'Holy',
+        14: 'Dark'
+    };
+
+    Rogue.equipmentCategories = {
+        0: 'Sword',
+        1: 'Helm',
+        2: 'Chestplate',
+        3: 'Bracers',
+        4: 'Cape'
+    };
+
+    Rogue.skills = {
+        0: { name: 'Health Up', max: 75 },
+        1: { name: 'Invuln Time Up', max: 5 },
+        2: { name: 'Death Defy', max: 10 },
+        3: { name: 'Attack Up', max: 75 },
+        4: { name: 'Down Strike Up', max: 5 },
+        5: { name: 'Crit Chance Up', max: 25 },
+        6: { name: 'Crit Damage Up', max: 25 },
+        7: { name: 'Magic Damage Up', max: 75 },
+        8: { name: 'Mana Up', max: 75 },
+        9: { name: 'Mana Cost Down', max: 5 },
+        10: { name: 'Smithy', max: 1 },
+        11: { name: 'Enchantress', max: 1 },
+        12: { name: 'Architect', max: 1 },
+        13: { name: 'Equip Up', max: 50 },
+        14: { name: 'Armor Up', max: 50 },
+        15: { name: 'Gold Gain Up', max: 5 },
+        16: { name: 'Haggle', max: 5 },
+        17: { name: 'Potion Up', max: 5 },
+        18: { name: 'Randomize Children', max: 1 },
+        19: { name: 'Unlock Lich', max: 1 },
+        20: { name: 'Unlock Miner', max: 1 },
+        21: { name: 'Unlock Spell Thief', max: 1 },
+        22: { name: 'Unlock Shinobi', max: 1 },
+        23: { name: 'Upgrade Knight', max: 1 },
+        24: { name: 'Upgrade Mage', max: 1 },
+        25: { name: 'Upgrade Knave', max: 1 },
+        26: { name: 'Upgrade Miner', max: 1 },
+        27: { name: 'Upgrade Barbarian', max: 1 },
+        28: { name: 'Upgrade Lich', max: 1 },
+        29: { name: 'Upgrade Shinobi', max: 1 },
+        30: { name: 'Upgrade Spell Thief', max: 1 },
+        31: { name: 'Beastiality', max: 1 }
+    }
+
+    Rogue.runeTypes = {
+        0: 'Vault',
+        1: 'Sprint',
+        2: 'Vampire',
+        3: 'Sky',
+        4: 'Siphon',
+        5: 'Retaliation',
+        6: 'Bounty',
+        7: 'Haste',
+        8: 'Curse',
+        9: 'Grace',
+        10: 'Balance'
+    };
+
+
     var propertyTypes = {
         1: 'Int32',
-        2: 'Int8',
+        2: 'Byte',
         3: 'Bool',
         4: 'String',
-        5: 'Float32'
+        5: 'Float32',
+        6: 'ArrayOfByteFields',
+        7: 'ByteField',
+        8: 'SByteField',
+        9: 'Int32Field'
     }
 
     var playerSchema = {
@@ -269,7 +432,16 @@ var Rogue;
         ]
     };
 
-
+    var upgradeSchema = {
+        name: "Upgrade",
+        items: [
+            ['blueprints', 6, 5, 15],
+            ['runes', 6, 5, 11],
+            ['equipedEquipment', 8, 5],
+            ['equipedRunes', 8, 5],
+            ['skills', 9, 32]
+        ]
+    };
 
     var currentDataView;
     var dataViewTotalByteLength = 0;
@@ -278,6 +450,20 @@ var Rogue;
 
     Rogue.currentSchemaName = '';
     Rogue.processedObject = '';
+
+
+    Rogue.getEquipmentName = function (category, base) {
+        return (this.equipmentBaseTypes[base] || '')
+            + ' ' + (this.equipmentCategories[category] || '');
+    }
+
+    Rogue.equipmentFound = function (prop, category, base)
+    {
+        var status = Rogue.processedObject[prop][category][base];
+
+        return status > 0;
+        
+    }
 
 
     /**
@@ -290,10 +476,15 @@ var Rogue;
 
         switch (propertyType) {
             case 1:  //'Int32'
-            case 2: //'Int8'
+            case 2: //'Byte'
             case 3: ///'Bool'
             case 5: //'Float32'
                 return 0;
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+                return [];
             case 4:// 'String'
             default:
                 return '';
@@ -314,13 +505,22 @@ var Rogue;
                 case 5: //'Float32'
                     size += 8;
                     break;
-                case 2: //'Int8'
+                case 2: //'Byte'
                 case 3: ///'Bool'
                     size += 1;
                     break;
                 case 4:// 'String'
                     if (source)
                         size += (source[item[0]] || '').length + 1; //+ 1for the 7-bit int header
+                    break;
+                case 7: // fields
+                case 8:
+                case 9:
+                    size += item[2];
+                    break;
+
+                case 6: // array of fields
+                    size += (item[2] * item[3]);
                     break;
             }
         }
@@ -342,7 +542,8 @@ var Rogue;
 
         for (var i in schema.items) {
             var item = schema.items[i];
-            var value = dataView['read' + propertyTypes[item[1]]]();
+            var args = item.slice(0).splice(2);
+            var value = dataView['read' + propertyTypes[item[1]]].apply(dataView, args);
 
             ret[item[0]] = value || getDefaultPropertyType(item[1]);
         }
@@ -378,6 +579,9 @@ var Rogue;
         if (/RogueLegacyPlayer\.rcdat/.test(fileName))
             return playerSchema;
 
+        if (/RogueLegacyBP\.rcdat/.test(fileName))
+            return upgradeSchema;
+
         return null;
     }
 
@@ -395,7 +599,7 @@ var Rogue;
         currentDataView._littleEndian = true;
 
         this.processedObject = buildObjectFromSchema(currentDataView, currentSchema);
-        
+
         dataViewTotalByteLength = currentDataView.byteLength;
         dataViewReadByteLength = currentDataView._offset;
 
@@ -433,7 +637,7 @@ var Rogue;
         dataViewReadByteLength = newViewWriteOffset;
     };
 
-       
+
 
     Rogue.downloadFile = function (fileName) {
         var blob = new Blob([currentDataView.buffer]);

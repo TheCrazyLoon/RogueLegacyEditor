@@ -3,7 +3,7 @@
 <head>
     <title>Rogue Legacy Save Editor</title>
 
-    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
     <link href="./css/rogue.css" rel="stylesheet">
     <link href="./css/bootstrap-switch.min.css" rel="stylesheet">
     <link rel="shortcut icon" href="./favicon.ico" />
@@ -14,25 +14,44 @@
     <div class="container">
 
         <div class="page-header">
-  <h1>Rogue Legacy Save Editor</h1>
-</div>
+            <h1>Rogue Legacy Save Editor</h1>
+        </div>
 
+        <div id="alert" class="alert alert-danger" style="display:none;">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <h4>Error</h4>
 
+            <p>There was a problem completing this activity. Please ensure you are using the supported files. If you are using the correct files and settings, please <a href=https://github.com/JakeH/RogueLegacyEditor/issues/new" target="_blank">add a new issue ticket on this project's page</a>, including the details of how the error occurred and please attach the files used.</p>
+
+            <p>The details of this error are:</p>
+            <p class="alert-message text-info"></p>
+
+            <br />
+            <button type="button" class="btn btn-default" data-dismiss="alert" aria-hidden="true">Dismiss</button>
+        </div>
 
         <div id="uploadContainer" class="well">
-            <p class="lead">To get started, drag and drop the RogueLegacyPlayer.rcdat file below. <small><a href="http://pcgamingwiki.com/wiki/Rogue_Legacy#Save_game_data_location" target="_blank">Save game location can be found here.</a> </small></p>
 
-            <div id="dropzone" class="alert alert-info">Drop save file here</div>
-            <p class="alert alert-danger">
-                Make sure you have a backup of your data before you use this tool. This tool may be inaccurate if the game has been updated. Known to work with the Windows version 1.2.0b of Rogue Legacy. <a href="https://github.com/JakeH/RogueLegacyEditor" target="_blank">Source code available on GitHub.</a>
+            <p class="lead">This tool will allow you to modify save game profies for the game <a href="http://roguelegacy.com/" target="_blank">Rogue Legacy</a></p>
+
+            <p>To get started, drag and drop the appropriate <strong>rcdat</strong> file below. <a href="http://pcgamingwiki.com/wiki/Rogue_Legacy#Save_game_data_location" target="_blank">Save game location can be found here.</a> </p>
+
+            <p>This tool currently supports the <strong>RogueLegacyBP <small>(Blueprints, Runes and the Manor skills)</small></strong> and the <strong>RogueLegacyPlayer <small>(Current character, Gold, Bonus skills, etc)</small></strong> files. </p>
+
+                        <p class="alert alert-danger">
+                Make sure you have a backup of your data before you use this tool. This tool may be inaccurate if the game has been updated. Known to work with the Windows version 1.2.0b of Rogue Legacy. 
             </p>
 
+
+            <div id="dropzone" class="alert alert-info">Drop save file here</div>
+
+            <a href="https://github.com/JakeH/RogueLegacyEditor" target="_blank">Source code available on GitHub</a>
         </div>
 
         <div id="editor" style="display: none;">
             <form class="form-horizontal" role="form" id="saveEditorForm">
             </form>
-            
+
             <div class="row">
                 <div class="col-xs-6 col-xs-push-3">
                     <button type="button" id="downloadButton" class="btn btn-primary btn-lg">Download Profile</button>
@@ -45,28 +64,20 @@
 
     </div>
 
-
-
-    <script src="./js/jquery-1.10.2.min.js"></script>
-    <script src="./js/bootstrap.min.js"></script>
-    <script src="./js/bootstrap-switch.min.js"></script>
-    <script src="./js/FileSaver.js"></script>
-    <script src="./js/jdataview.js"></script>
-    <script src="./js/rogue.js"></script>
-
     <script type="text/template" id="templateInt">
 
         <div class="form-group">
-            <label for="input{prop}" class="col-sm-4 control-label">{title}</label>
+            <label for="input{prop}-{propIndex}" class="col-sm-4 control-label">{title}</label>
 
             <div class="col-sm-5">
-                <input id="input{prop}" class="form-control" type="number" name="{prop}" min="{min}" max="{max}" step="{step}" value="{value}" data-number-type="{numberType}" />
+                <input id="input{prop}-{propIndex}" class="form-control" type="number" name="{prop}" data-propindex="{propIndex}"
+                    min="{min}" max="{max}" step="{step}" value="{value}" data-number-type="{numberType}" />
 
                 <span class="help-block">Min: <strong>{min}</strong> | Max: <strong>{max}</strong>&nbsp; <span class="text-info">{help}</span></span>
             </div>
             <div class="btn-group col-sm-3">
-                <button type="button" class="btn btn-default" onclick="javascript:setValue('{prop}',{max})" title="Set to maximum value">Max</button>
-                <button type="button" class="btn btn-default" onclick="javascript:setValue('{prop}',{min})" title="Set to minimum value">Min</button>
+                <button type="button" class="btn btn-default" onclick="javascript:Rogue.UI.setValue('input{prop}-{propIndex}', {max})" title="Set to maximum value">Max</button>
+                <button type="button" class="btn btn-default" onclick="javascript:Rogue.UI.setValue('input{prop}-{propIndex}', {min})" title="Set to minimum value">Min</button>
             </div>
         </div>
 
@@ -80,12 +91,12 @@
             <label for="input{prop}" class="col-sm-4 control-label">{title}</label>
 
             <div class="col-sm-5">
-                <input id="input{prop}" {checked} type="checkbox" name="{prop}" class="switch-large" data-on-label="{onLabel}" data-off-label="{offLabel}" data-on="{onClass}" data-off="{offClass}" />
+                <input id="input{prop}" {checked} type="checkbox" name="{prop}" class="switch-large" 
+                    data-on-label="{onLabel}" data-off-label="{offLabel}" data-on="{onClass}" data-off="{offClass}" />
 
                 <span class="help-block"><span class="text-info">{help}</span></span>
             </div>
         </div>
-
 
     </script>
 
@@ -101,9 +112,7 @@
             </div>
         </div>
 
-
     </script>
-
 
     <script type="text/template" id="templateSelect">
 
@@ -119,263 +128,65 @@
             </div>
         </div>
 
+    </script>
+
+    <script type="text/template" id="templatePanel">
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3>{title}</h3>
+                {description}
+            </div>
+            <div class="panel-body"></div>
+        </div>
 
     </script>
+
+            <script type="text/template" id="templateEquipmentRow">
+
+        <div class="row equipment-row">
+            {cells}
+        </div>
+
+    </script>
+
+        <script type="text/template" id="templateEquipmentCell">
+
+        <div class="col-xs-2 equipment-cell" {toggled} data-untoggled-value="{untoggledValue}" data-toggled-value="{toggledValue}"
+            data-toggle-box data-prop="{prop}" data-propindex="{propIndex}">
+            {name}
+        </div>
+
+    </script>
+
+    <script type="text/template" id="templateEquipmentButtonGroup">
+
+        <div class="row equipment-button-row">
+            <div class="col-xs-4">
+                <button data-role="unlock" class="btn btn-default">Unlock All</button>
+                <button data-role="lock" class="btn btn-default">Lock All</button>
+            </div>
+        </div>
+
+    </script>
+
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+    <script src="./js/bootstrap-switch.min.js"></script>
+    <script src="./js/FileSaver.js"></script>
+    <script src="./js/jdataview.js"></script>
+    <script src="./js/rogue.js"></script>
+    <script src="./js/rogue.ui.js"></script>
 
     <script>
-
-        /// <reference path="./js/rogue.js" />
-
-        String.prototype.format = function (data) {
-            return this.replace(/{(\w+)}/g, function (match) {
-                if (match.length <= 2) return match;
-                var p = match.replace(/^{/, '').replace(/}$/, '')
-                return typeof data[p] != 'undefined' ? data[p] : match;
-            });
-        };
-
-
-
-        function setValue(name, value) {
-            $('#saveEditorForm input[name=' + name + ']').val(parseFloat(value));
-        }
-
-        var $sectionContainer;
-
-        function startSection(title, description) {
-
-            var $html = $('<div class="panel panel-primary"><div class="panel-heading"><h3>{title}</h3>{description}</div><div class="panel-body"></div></div>'
-                        .format({ title: title, description: description }));
-
-            $sectionContainer = $html.find('.panel-body');
-
-            $('#saveEditorForm').append($html);
-        }
-
-        function endSection() {
-            $sectionContainer = null;
-        }
-
-        function addTemplatedItem(data) {
-
-            data.value = Rogue.processedObject[data.prop];
-
-            if (typeof (data.value) === 'boolean') {
-                data.checked = data.value ? 'checked' : '';
-            }
-
-            if (data.template == 'Select') {
-
-                var opts = '';
-                for (var i in data.options) {
-                    opts += '<option value="' + i + '"' + (data.value == i ? 'selected' : '') + '>' + data.options[i] + '</option>';
-                }
-                data.options = opts;
-            }
-
-            data.min = data.min || 0;
-            data.offLabel = data.offLabel || 'No';
-            data.onLabel = data.onLabel || 'Yes';
-            data.onClass = data.onClass || 'primary';
-            data.offClass = data.offClass || 'default';
-            data.readOnly = data.readOnly ? 'readonly' : '';
-
-
-
-            data.help = data.help || '';
-
-
-            if (data.template == 'Int') {
-                data.max = data.max || Rogue.MAX_INT32;
-                data.numberType = 'whole';
-            }
-            else if (data.template == 'Byte') {
-                data.max = data.max || Rogue.MAX_BYTE;
-                data.template = 'Int';
-                data.numberType = 'whole';
-            }
-            else if (data.template == 'Float') {
-                data.max = data.max || Rogue.MAX_FLOAT;
-                data.template = 'Int';
-                data.step = 'any';
-                data.numberType = 'float';
-            }
-            else
-                data.max = data.max || 0;
-
-            data.step = data.step || Math.min(1000, Math.round(data.max * .10));
-
-
-
-            var $html = $($('#template' + data.template).html().format(data));
-
-            if (data.template === 'Bool') {
-                //wire up
-                $html.find('input[type=checkbox]').bootstrapSwitch();
-            }
-
-            if ($sectionContainer)
-                $sectionContainer.append($html);
-            else
-                $('#saveEditorForm').append($html);
-
-
-        }
-
-        function createCharacterUI() {
-            $('#saveEditorForm').empty();
-
-
-            startSection('Your Current Character', 'The following values affect the character you are currently playing.');
-
-            addTemplatedItem({ template: 'String', prop: 'playerName', title: 'Name' });
-            addTemplatedItem({ template: 'Select', prop: 'classType', title: 'Class', options: Rogue.classes });
-            addTemplatedItem({ template: 'Select', prop: 'traitsA', title: 'Trait A', options: Rogue.traits });
-            addTemplatedItem({ template: 'Select', prop: 'traitsB', title: 'Trait B', options: Rogue.traits });
-            addTemplatedItem({ template: 'Select', prop: 'spell', title: 'Spell', options: Rogue.spells });
-            addTemplatedItem({ template: 'Select', prop: 'specialItem', title: 'Special Item', options: Rogue.specialItems });
-            addTemplatedItem({ template: 'Int', prop: 'currentHealth', title: 'Current Health', help: 'The game will reset this value to the max possible for your character on load' });
-            addTemplatedItem({ template: 'Int', prop: 'currentMana', title: 'Current Mana', help: 'The game will reset this value to the max possible for your character on load' });
-            addTemplatedItem({ template: 'Bool', prop: 'isDead', title: 'You are dead', onClass: 'danger', offClass: 'success' });
-            addTemplatedItem({ template: 'Bool', prop: 'isFemale', title: 'Gender', onClass: 'default', offClass: 'default', onLabel: 'Lady', offLabel: 'Sir' });
-            addTemplatedItem({ template: 'Bool', prop: 'lockCastle', title: 'Castle Locked' });
-
-            var boss = { template: 'Bool', onLabel: 'Dead', offLabel: 'Alive', onClass: 'danger', offClass: 'success' };
-            addTemplatedItem($.extend({ prop: 'eyeballBossBeaten', title: 'Khidr' }, boss));
-            addTemplatedItem($.extend({ prop: 'fairyBossBeaten', title: 'Alexander' }, boss));
-            addTemplatedItem($.extend({ prop: 'fireballBossBeaten', title: 'Ponce de Leon' }, boss));
-            addTemplatedItem($.extend({ prop: 'blobBossBeaten', title: 'Herodotus' }, boss));
-            addTemplatedItem($.extend({ prop: 'lastbossBeaten', title: 'Johannes' }, boss));
-            addTemplatedItem($.extend({ prop: 'newBossBeaten', title: 'New Boss(?)' }, boss));
-
-            endSection();
-
-            startSection('Your Profile', 'These values affect your entire profile');
-
-            addTemplatedItem({ template: 'Int', prop: 'gold', title: 'Gold' });
-
-            var bonus = { template: 'Int', min: 0, max: 500, help: 'Technically, you can go higher with this value, but it might cause a negative effect' }
-            addTemplatedItem($.extend({ prop: 'bonusHealth', title: 'Bonus Health' }, bonus));
-            addTemplatedItem($.extend({ prop: 'bonusStrength', title: 'Bonus Stength' }, bonus));
-            addTemplatedItem($.extend({ prop: 'bonusMana', title: 'Bonus Mana' }, bonus));
-            addTemplatedItem($.extend({ prop: 'bonusDefense', title: 'Bonus Defense' }, bonus));
-            addTemplatedItem($.extend({ prop: 'bonusWeight', title: 'Bonus Weight' }, bonus));
-            addTemplatedItem($.extend({ prop: 'bonusMagic', title: 'Bonus Magic' }, bonus));
-
-            addTemplatedItem({ template: 'Bool', prop: 'hardcoreMode', title: 'Hardcore Mode' });
-            addTemplatedItem({ template: 'Bool', prop: 'spokenToLastBoss', title: 'Spoke To Last Boss' });
-            addTemplatedItem({ template: 'Bool', prop: 'readLastDiary', title: 'Read Last Diary' });
-
-            addTemplatedItem({ template: 'Int', prop: 'timesDead', title: 'Times Died' });
-            addTemplatedItem({ template: 'Int', prop: 'timesCastleBeaten', title: 'Times Castle Beaten' });
-            addTemplatedItem({ template: 'Float', prop: 'totalHoursPlayed', title: 'Total Hours Played', max: 2000, help: 'Max is technically ' + Rogue.MAX_FLOAT + ' but let\'s be realistic' });
-
-            endSection();
-
-            $('#editor').show();
-            $('#uploadContainer').hide();
-        }
-
-
-        function saveProfile() {
-
-            var newObject = buildObjectFromUI();
-            Rogue.commitChanges(newObject);
-            Rogue.downloadFile(originalFilename);
-
-        }
-
-
-        function buildObjectFromUI() {
-            var ret = {};
-
-            $('#saveEditorForm').find('select, input').each(function (e, t) {
-
-                var val;
-
-                if (t.type === 'text') {
-                    val = $.trim(t.value);
-                }
-                else if (t.type === 'number') {
-                    if (t.attributes['data-number-type'] && t.attributes['data-number-type'].value === 'float') {
-                        val = parseFloat(t.value);
-                    }
-                    else {
-                        val = parseInt(t.value);
-                    }
-                }
-                else if (t.type === 'checkbox') {
-                    val = t.checked;
-                }
-                else if (t.type === 'select-one') {
-                    val = t.value;
-                }
-
-                ret[t.name] = val;
-
-            });
-
-            return ret;
-        }
-
-
-        var originalFilename = '';
-
-        function handleFileSelect(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-
-            var file = evt.dataTransfer.files[0];
-
-            originalFilename = file.name;
-
-            var reader = new FileReader();
-
-            reader.onloadend = function (evt) {
-
-                try {
-
-                    Rogue.readData(reader.result, originalFilename);
-
-                } catch (e) {
-                    return;
-                }
-                
-                switch (Rogue.currentSchemaName)
-                {
-                    case "Player":
-                        createCharacterUI();
-                        break;
-                }
-
-                
-            }
-
-            reader.readAsArrayBuffer(file);
-
-
-        }
-
-        function handleDragOver(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            evt.dataTransfer.dropEffect = 'copy';
-        }
-
-
-
-        var dropZone = document.getElementById('uploadContainer');
-        dropZone.addEventListener('dragover', handleDragOver, false);
-        dropZone.addEventListener('drop', handleFileSelect, false);
-
         $(document).ready(function () {
-            $('#downloadButton').click(saveProfile);
-            $('#resetButton').click(function () {
-                $('#editor').hide();
-                $('#uploadContainer').show();
-            });
+            Rogue.UI.init();
         });
-
     </script>
+    
+    <!--<script src="//static.getclicky.com/js" type="text/javascript"></script>
+    <script type="text/javascript">try { clicky.init(100689322); } catch (e) { }</script>
+    <noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100689322ns.gif" /></p></noscript>-->
 </body>
 </html>
