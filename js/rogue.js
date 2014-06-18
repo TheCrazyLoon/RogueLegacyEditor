@@ -429,7 +429,10 @@ var Rogue;
             ['wizardSpellA', 2],
             ['wizardSpellB', 2],
             ['wizardSpellC', 2]
-        ]
+        ],
+        onSave: function (obj) {
+            obj.spell = obj.wizardSpellA;
+        }
     };
 
     var upgradeSchema = {
@@ -606,6 +609,9 @@ var Rogue;
     };
 
     Rogue.commitChanges = function (newObject) {
+
+        if (currentSchema.onSave != undefined)
+            currentSchema.onSave(newObject);
 
         for (var prop in newObject) {
             this.processedObject[prop] = newObject[prop];

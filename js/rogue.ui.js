@@ -270,7 +270,9 @@ var Rogue;
         addTemplatedItem({ template: 'Select', prop: 'classType', title: 'Class', options: Rogue.classes });
         addTemplatedItem({ template: 'Select', prop: 'traitsA', title: 'Trait A', options: Rogue.traits });
         addTemplatedItem({ template: 'Select', prop: 'traitsB', title: 'Trait B', options: Rogue.traits });
-        addTemplatedItem({ template: 'Select', prop: 'spell', title: 'Spell', options: Rogue.spells });
+        addTemplatedItem({ template: 'Select', prop: 'wizardSpellA', title: 'Spell A', options: Rogue.spells });
+        addTemplatedItem({ template: 'Select', prop: 'wizardSpellB', title: 'Spell B', options: Rogue.spells });
+        addTemplatedItem({ template: 'Select', prop: 'wizardSpellC', title: 'Spell C', options: Rogue.spells });
         addTemplatedItem({ template: 'Select', prop: 'specialItem', title: 'Special Item', options: Rogue.specialItems });
         addTemplatedItem({ template: 'Int', prop: 'currentHealth', title: 'Current Health', help: 'The game will reset this value to the max possible for your character on load' });
         addTemplatedItem({ template: 'Int', prop: 'currentMana', title: 'Current Mana', help: 'The game will reset this value to the max possible for your character on load' });
@@ -287,6 +289,10 @@ var Rogue;
         addTemplatedItem($.extend({ prop: 'newBossBeaten', title: 'New Boss(?)' }, boss));
 
         endSection();
+
+        
+        
+        
 
         startSection('Your Profile', 'These values affect your entire profile');
 
